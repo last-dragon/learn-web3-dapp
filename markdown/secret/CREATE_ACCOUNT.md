@@ -27,9 +27,6 @@ In `pages/api/secret/account.ts`, implement the function to first create a **mne
 - [**Documentation for `@iov/crypto`'s BIP39 implementation**](https://iov-one.github.io/iov-core-docs/latest/iov-crypto/classes/bip39.html)
 - [**Account example**](https://github.com/enigmampc/SecretJS-Templates/blob/master/2_creating_account/create_account.js)
 
-{% hint style="info" %}
-You can [**join us on Discord**](https://discord.gg/fszyM7K), if you have questions or want help completing the tutorial.
-{% endhint %}
 
 Still not sure how to do this? No problem! The solution is below so you don't get stuck.
 

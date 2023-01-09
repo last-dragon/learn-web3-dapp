@@ -48,6 +48,4 @@ Now, it's time to see the query in action! Click on the button on the right, and
 
 Congratulations, you made it! What did you think?
 
-If you have any feedback, reach out on [Discord](https://figment.io/devchat)!
-
 If you want to keep learning about The Graph, NEAR, or Ceramic, we have more advanced tutorials on [Figment Learn](https://learn.figment.io/protocols/).

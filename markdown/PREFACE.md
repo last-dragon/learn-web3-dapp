@@ -41,10 +41,6 @@ When you have completed the code, make sure it works by interacting with the UI 
 
 If you're using a private infractructure provider, you may require an API key to access nodes via their endpoints. Remember to have your API key saved in `/learn-web3-dapp/.env.local`. You can then reference your API key in the pathway code via `process.env.<SOME_VARIABLE_NAME>`.
 
-## 💬 Connect with us on Discord
-
-If you experience any difficulty in using the Pathway or want to talk about Web 3, please join our Developer community on Discord - <https://figment.io/devchat>
-
 ## 👣 Next Steps
 
 Click on the **Next** (or **Setup the project**) button below to continue with the Pathway.

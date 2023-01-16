@@ -1,12 +1,8 @@
 import type {NextApiRequest, NextApiResponse} from 'next';
 import {getNodeUrl} from '@figment-secret/lib';
-import {
-  EnigmaUtils,
-  SigningCosmWasmClient,
-  Secp256k1Pen,
-  pubkeyToAddress,
-  encodeSecp256k1Pubkey,
-} from 'secretjs';
+const {Wallet, SecretNetworkClient} = require('secretjs');
+
+const EXECUTE_GAS_LIMIT = 100_000;
 
 export default async function connect(
   req: NextApiRequest,
@@ -15,28 +11,19 @@ export default async function connect(
   try {
     const url = getNodeUrl();
     const {mnemonic, contractId} = req.body;
-    const signingPen = await Secp256k1Pen.fromMnemonic(mnemonic);
-    const pubkey = encodeSecp256k1Pubkey(signingPen.pubkey);
-    const address = pubkeyToAddress(pubkey, 'secret');
 
-    const customFees = {
-      exec: {
-        amount: [{amount: '500000', denom: 'uscrt'}],
-        gas: '500000',
-      },
-    };
     // Initialise client
-    const txEncryptionSeed = EnigmaUtils.GenerateNewSeed();
-    const client = new SigningCosmWasmClient(
-      url,
-      address,
-      (signBytes) => signingPen.sign(signBytes),
-      txEncryptionSeed,
-      customFees,
-    );
+    const wallet = new Wallet(mnemonic);
+    const client = new SecretNetworkClient({
+      url: url,
+      wallet: wallet,
+      walletAddress: wallet.address,
+      chainId: 'pulsar-2',
+    });
 
     // Increment the counter
     const handleMsg = {increment: {}};
+
     const response = undefined;
 
     res.status(200).json(response.transactionHash);

@@ -1,10 +1,4 @@
-import {
-  EnigmaUtils,
-  SigningCosmWasmClient,
-  Secp256k1Pen,
-  pubkeyToAddress,
-  encodeSecp256k1Pubkey,
-} from 'secretjs';
+const {Wallet, SecretNetworkClient} = require('secretjs');
 import {getNodeUrl} from '@figment-secret/lib';
 import type {NextApiRequest, NextApiResponse} from 'next';
 
@@ -16,33 +10,21 @@ export default async function connect(
     const url = getNodeUrl();
     const {mnemonic, contractId} = req.body;
 
-    const signingPen = await Secp256k1Pen.fromMnemonic(mnemonic);
-    const pubkey = encodeSecp256k1Pubkey(signingPen.pubkey);
-    const address = pubkeyToAddress(pubkey, 'secret');
-
-    const customFees = {
-      send: {
-        amount: [{amount: '80000', denom: 'uscrt'}],
-        gas: '80000',
-      },
-    };
-
     // Initialise client
-    const txEncryptionSeed = EnigmaUtils.GenerateNewSeed();
-    const client = new SigningCosmWasmClient(
-      url,
-      address,
-      (signBytes) => signingPen.sign(signBytes),
-      txEncryptionSeed,
-      customFees,
-    );
+    const wallet = new Wallet(mnemonic);
+    const client = new SecretNetworkClient({
+      url: url,
+      wallet: wallet,
+      walletAddress: wallet.address,
+      chainId: 'pulsar-2',
+    });
 
     // Get the stored value
     console.log('Querying contract for current count');
-    let response = undefined;
-    let count = response.count as number;
 
-    res.status(200).json(count.toString());
+    const count = undefined;
+
+    res.status(200).json(count);
   } catch (error) {
     let errorMessage = error instanceof Error ? error.message : 'Unknown Error';
     res.status(500).json(errorMessage);

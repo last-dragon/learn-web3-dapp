@@ -5,21 +5,8 @@ If you want to learn more about Secret smart contracts, follow the [**Developing
 {% endhint %}
 
 {% hint style="danger" %}
-You could experience some issues with the availability of the network [**Click here to check the current status**](https://secretnodes.com/secret/chains/pulsar-2)
+You could experience some issues with the availability of the network [**Click here to check the current status**](https://secretnodes.com/pulsar)
 {% endhint %}
-
-Before focusing on altering a value on the smart contract, let's take a look at the fees object:
-
-```typescript
-const customFees = {
-  exec: {
-    amount: [{amount: '500000', denom: 'uscrt'}],
-    gas: '500000',
-  },
-};
-```
-
-- This `customFees` object stores the predefined amount of **uSCRT** to pay in order to **execute** a write-access method of the smart contract.
 
 ---
 
@@ -41,8 +28,8 @@ const response = undefined;
 
 **Need some help?** Check out these links 👇
 
-- [**Contract example**](https://github.com/enigmampc/SecretJS-Templates/tree/master/5_contracts)
-- [**`execute()`**](https://github.com/enigmampc/SecretNetwork/blob/7adccb9a09579a564fc90173cc9509d88c46d114/cosmwasm-js/packages/sdk/src/signingcosmwasmclient.ts#L409)
+- [**Contract example**](https://github.com/scrtlabs/SecretJS-Templates/blob/master/5_contracts)
+- [**`executeContract()`**](https://github.com/scrtlabs/secret.js#secretjstxcomputeexecutecontract)
 
 Still not sure how to do this? No problem! The solution is below so you don't get stuck.
 
@@ -55,13 +42,22 @@ Still not sure how to do this? No problem! The solution is below so you don't ge
 //...
 // Increment the counter
 const handleMsg = {increment: {}};
-const response = await client.execute(contractId, handleMsg);
+const response = await client.tx.compute.executeContract(
+  {
+    sender: wallet.address,
+    contract_address: contractId,
+    msg: handleMsg,
+  },
+  {
+    gasLimit: EXECUTE_GAS_LIMIT,
+  },
+);
 //...
 ```
 
 **What happened in the code above?**
 
-- We're calling the `execute` method of the `SigningCosmWasmClient`, passing to it:
+- We're calling the `executeContract` method of the `SecretNetworkClient`, passing to it:
   - The `contractId`, which is the contract address.
   - The `{ increment: {} }` object which represents the name of the method we are calling and the parameters we're passing to it. Again, we are passing an empty object as there are no arguments.
 

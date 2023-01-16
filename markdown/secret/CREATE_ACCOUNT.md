@@ -5,7 +5,7 @@ Like with most Web 3 protocols, transactions on Secret happen between **accounts
 # 🏋️ Challenge
 
 {% hint style="tip" %}
-In `pages/api/secret/account.ts`, implement the function to first create a **mnemonic**, then produce an **address** from the **public key** belonging to the **mnemonic**. You must replace the instances of `undefined` with working code to accomplish this.
+In `pages/api/secret/account.ts`, implement the function to first create a **Wallet**, then produce an **address** and **mnemonic**. You must replace the instances of `undefined` with working code to accomplish this.
 {% endhint %}
 
 **Take a few minutes to figure this out**
@@ -13,10 +13,9 @@ In `pages/api/secret/account.ts`, implement the function to first create a **mne
 ```typescript
 //...
   try {
-    const mnemonic = undefined;
-    const signingPen = await undefined;
-    const pubkey = undefined;
+    const wallet = undefined;
     const address = undefined;
+    const mnemonic = undefined;
     res.status(200).json({mnemonic, address})
   }
 //...
@@ -24,9 +23,8 @@ In `pages/api/secret/account.ts`, implement the function to first create a **mne
 
 **Need some help?** Check out these links
 
-- [**Documentation for `@iov/crypto`'s BIP39 implementation**](https://iov-one.github.io/iov-core-docs/latest/iov-crypto/classes/bip39.html)
-- [**Account example**](https://github.com/enigmampc/SecretJS-Templates/blob/master/2_creating_account/create_account.js)
-
+- [**Documentation for Secret.JS `Wallet`**](https://github.com/scrtlabs/secret.js#wallet)
+- [**Account example**](https://github.com/scrtlabs/SecretJS-Templates/blob/master/2_creating_account/create_account.js)
 
 Still not sure how to do this? No problem! The solution is below so you don't get stuck.
 
@@ -37,23 +35,21 @@ Still not sure how to do this? No problem! The solution is below so you don't ge
 ```typescript
 // solution
   try {
-    const mnemonic = Bip39.encode(Random.getBytes(16)).toString();
-    const signingPen = await Secp256k1Pen.fromMnemonic(mnemonic)
-    const pubkey = encodeSecp256k1Pubkey(signingPen.pubkey);
-    const address = pubkeyToAddress(pubkey, 'secret');
-    res.status(200).json({mnemonic, address})
+    const wallet = new Wallet();
+    const address = wallet.address;
+    const mnemonic = wallet.mnemonic
+    res.status(200).json({mnemonic, address});
   }
 ```
 
 **What happened in the code above?**
 
-- First we create a random **mnemonic** using the `fromMnemonic` method of the `Secp256k1Pen` class.
-- Next we deduce the public key from it using the `encodeSecp256k1Pubkey` function.
-- Then we deduce the wallet address from it using the `pubkeyToAddress` function.
+- First we create a random **mnemonic** using the `Wallet` constructor.
+- We can access the mnemonic, address, publicKey, privateKey and more from the Wallet object.
 - Finally we send the mnemonic and address back to the client-side as a JSON object.
 
 {% hint style="tip" %}
-Do not forget to fund the newly created wallet using the [secret faucet](https://faucet.secrettestnet.io/) in order to activate it!
+Do not forget to fund the newly created wallet using the [secret faucet](https://faucet.pulsar.scrttestnet.com) in order to activate it!
 {% endhint %}
 
 ---

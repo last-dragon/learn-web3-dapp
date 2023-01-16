@@ -52,7 +52,7 @@ yarn dev
 
 # 🤝 Feedback and contributing
 
-Feel free to open an Issue or a Pull Request on the repo itself.
+Feel free to also open an Issue or a Pull Request on the repo itself.
 
 We hope you enjoy our Web 3 education dApps 🚀
 

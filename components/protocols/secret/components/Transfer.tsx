@@ -18,8 +18,6 @@ const tailLayout = {
 
 const {Text} = Typography;
 
-const RECIPIENT = 'secret1v4n4du5w02degaalj682p03pjkthf4cund49hc';
-
 const Transfer = () => {
   const {state, dispatch} = useGlobalState();
   const {address, mnemonic} = getInnerState(state);
@@ -48,8 +46,9 @@ const Transfer = () => {
       const response = await axios.post(`/api/secret/transfer`, {
         mnemonic,
         txAmount,
-        recipient: RECIPIENT,
+        recipient: address, // Sending back to the wallet
       });
+      console.log(`response data = ${response.data}`);
       setHash(response.data);
     } catch (error) {
       setError(error.message);

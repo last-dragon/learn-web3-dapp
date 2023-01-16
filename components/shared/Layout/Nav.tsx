@@ -31,7 +31,6 @@ const Nav = () => {
           {chainLabel}
         </ChainTitle>
       </Row>
-
     </StyledNav>
   );
 };

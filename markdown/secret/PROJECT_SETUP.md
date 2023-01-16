@@ -15,7 +15,7 @@ When connecting to Secret, this pathway defaults to using a helper function whic
 Note that you can always pass an endpoint URL when instantiating the `CosmWasmClient`, for example:
 
 ```typescript
-const client = new CosmWasmClient('http://testnet.securesecrets.org:1317/');
+const client = new SecretNetworkClient({'https://api.pulsar.scrttestnet.com', chainId: 'pulsar-2'});
 ```
 
 ---

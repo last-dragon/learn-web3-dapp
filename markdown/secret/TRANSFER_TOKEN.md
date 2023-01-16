@@ -3,7 +3,7 @@ Of course, everyone likes to eat pizza, but among all available pizzas you prefe
 To do so, you'll need to make an encrypted transaction - in the **Secret** world everything is done with privacy in mind! Let's take a look at how to do this.
 
 {% hint style="danger" %}
-You could experience some issues with the availability of the network [**Click here to check the current status**](https://secretnodes.com/secret/chains/pulsar-2)
+You could experience some issues with the availability of the network [**Click here to check the current status**](https://secretnodes.com/pulsar)
 {% endhint %}
 
 ---
@@ -11,41 +11,29 @@ You could experience some issues with the availability of the network [**Click h
 # 🏋️ Challenge
 
 {% hint style="tip" %}
-In `pages/api/secret/transfer.ts`, implement the default function. There is a lot to fill here, so be careful!
+In `pages/api/secret/transfer.ts`, implement the default function.
 {% endhint %}
 
 **Take a few minutes to figure this out.**
 
 ```tsx
 //..
-// 0. A very specific Secret feature (this allows us to make the transaction encrypted)
-const txEncryptionSeed = EnigmaUtils.GenerateNewSeed();
-
-// 1. The fees you'll need to pay to complete the transaction
-const fees = {
-  send: {
-    amount: [{amount: '80000', denom: 'uscrt'}],
-    gas: '80000',
-  },
-};
+// 1. Initialize the wallet with the given mnemonic
+const wallet = undefined;
 
 // 2. Initialize a secure Secret client
-const client = new SigningCosmWasmClient(undefined);
+const client = new SecretNetworkClient(undefined);
 
 // 3. Send tokens
 const memo = 'sendTokens example'; // Optional memo to identify the transaction
-const sent = await client.sendTokens(undefined);
-
-// 4. Query the tx result
-const query = {id: sent.transactionHash};
-const transaction = await client.searchTx(query);
+const sent = await client.tx.bank.send(undefined);
 //..
 ```
 
 **Need some help?** Check out these links 👇
 
-- [**Transaction example**](https://github.com/enigmampc/SecretJS-Templates/blob/master/4_transactions/send.js)
-- [**Documentation of `secrectjs`**](https://github.com/enigmampc/SecretNetwork/tree/master/cosmwasm-js/packages/sdk)
+- [**Transaction example**](https://github.com/scrtlabs/SecretJS-Templates/blob/master/4_transactions/transfer.js)
+- [**Documentation of `secret.js`**](https://secretjs.scrt.network/)
 
 Still not sure how to do this? No problem! The solution is below so you don't get stuck.
 
@@ -56,41 +44,48 @@ Still not sure how to do this? No problem! The solution is below so you don't ge
 ```tsx
 // solution
 //...
+// 1. Initialize the wallet with the given mnemonic
+const wallet = new Wallet(mnemonic);
+
 // 2. Initialize a secure Secret client
-const client = new SigningCosmWasmClient(
-  url,
-  address,
-  (signBytes) => signingPen.sign(signBytes),
-  txEncryptionSeed,
-  fees,
-);
+const client = new SecretNetworkClient({
+  url: url,
+  wallet: wallet,
+  walletAddress: wallet.address,
+  chainId: 'pulsar-2',
+});
 
 // 3. Send tokens
 const memo = 'sendTokens example'; // optional memo
-const sent = await client.sendTokens(
-  address,
-  [
-    {
-      amount: txAmount,
-      denom: 'uscrt',
-    },
-  ],
-  memo,
+const sent = await client.tx.bank.send(
+  {
+    amount: [{amount: txAmount, denom: 'uscrt'}],
+    from_address: wallet.address,
+    to_address: wallet.address,
+  },
+  {
+    gasLimit: 20_000,
+    gasPriceInFeeDenom: 0.25,
+    memo: memo,
+  },
 );
 //..
 ```
 
 **What happened in the code above?**
 
-- First, we create a secure connection using `SigningCosmWasmClient`, passing:
+- First, we initialize the wallet with the mnemonic.
+- Next, we create a secure connection using `SecretNetworkClient`, passing:
   - The `url` of the network.
-  - The `address` of our wallet.
-  - A closure capturing our `signingPen`, to sign the transaction.
-  - A randomized seed, for privacy - this was generated above by `EnigmaUtils.GenerateNewSeed()`
-  - Some fees to reward the validator which will process our transaction.
-- Next, we send the specified amount of token using `sendTokens`, passing:
-  - The recipient `address`.
+  - The unlocked `wallet` for the mnemonic.
+  - The `walletAddress`, specific account address in the wallet that is permitted to sign transactions & permits.
+  - The `chainId`, pulsar-2 is the public test network's chainId.
+- Next, we send the specified amount of token using `send`, passing:
   - The amount, and `denom` (denomination) of the token - in this case `uscrt`. Note that the format here is an object inside of an array: `[{}]`. This is because the `fees` amount is using the TypeScript definition for the `Coin` interface, which is a `ReadOnlyArray<Coin>` containing both the `denom` and `amount`.
+  - The sender's address, `from_address`.
+  - The recipient's address. `to_address`.
+  - The `gasLimit`
+  - The `gasPriceInFeeDenom`
   - An optional `memo` to identify the transaction.
 
 ---

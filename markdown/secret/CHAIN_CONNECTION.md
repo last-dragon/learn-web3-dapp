@@ -26,8 +26,8 @@ try {
 
 **Need some help?** Check out these links 👇
 
-- [**Connection example**](https://github.com/enigmampc/SecretJS-Templates/tree/master/1_connecting_to_node)
-- [**Read the code for `SecretJS` & `cosmwasm`**](https://github.com/enigmampc/SecretNetwork/tree/master/cosmwasm-js/packages/sdk)
+- [**Connection example**](https://github.com/scrtlabs/SecretJS-Templates/tree/master/1_connecting_to_node)
+- [**Read the code for `Secret.JS`**](https://github.com/scrtlabs/secret.js)
 
 Still not sure how to do this? No problem! The solution is below so you don't get stuck.
 
@@ -39,18 +39,18 @@ Still not sure how to do this? No problem! The solution is below so you don't ge
 // solution
 try {
     const url = getNodeUrl();
-    const client = new CosmWasmClient(url);
-    const nodeInfo = await client.restClient.nodeInfo();
-    const version = nodeInfo.application_version.version;
+    const client = new SecretNetworkClient({url, chainId: 'pulsar-2'});
+    const nodeInfo = await client.query.tendermint.getNodeInfo({});
+    const version = nodeInfo.default_node_info?.version;
     res.status(200).json(version);
   }
 ```
 
 **What happened in the code above?**
 
-- First, we instantiate a new `CosmWasmClient` passing the URL of the network we want to use (`getNodeUrl` currently defaults to the `pulsar-2` testnet).
-- Next, using the `nodeInfo` method of the rest client returns a `NodeInfoResponse`.
-- Inspecting the methods of our object will lead us naturally to reference the `application_version.version` property.
+- First, we instantiate a new `SecretNetworkClient` passing the URL of the network we want to use (`getNodeUrl`, and the chainId for the `pulsar-2` testnet).
+- Next, using the `nodeInfo` method of the rest client returns a `GetNodeInfoResponse`.
+- Inspecting the methods of our object will lead us naturally to reference the `default_node_info.version` property.
 - Finally, we send the `version` back to the client-side as JSON.
 
 ---

@@ -6,7 +6,7 @@ import {useGlobalState} from 'context';
 
 const {Text} = Typography;
 
-const FAUCET_URL = 'https://faucet.supernova.enigma.co/';
+const FAUCET_URL = 'https://faucet.pulsar.scrttestnet.com';
 
 const Account = () => {
   const {dispatch} = useGlobalState();

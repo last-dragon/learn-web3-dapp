@@ -10,28 +10,20 @@ If you want to learn more about Secret smart contracts, follow the [**Developing
 {% endhint %}
 
 {% hint style="danger" %}
-You could experience some issues with the availability of the network [**Click here to check the current status**](https://secretnodes.com/secret/chains/supernova-2)
+You could experience some issues with the availability of the network [**Click here to check the current status**](https://secretnodes.com/pulsar)
 {% endhint %}
 
 Before focusing on the deployment instructions, let's take a look at some important global variables:
 
 ```typescript
 const CONTRACT_PATH = './contracts/secret/contract.wasm';
-
-const customFees = {
-  upload: {
-    amount: [{amount: '2000000', denom: 'uscrt'}],
-    gas: '2000000',
-  },
-  init: {
-    amount: [{amount: '500000', denom: 'uscrt'}],
-    gas: '500000',
-  },
-};
+const STORE_CODE_GAS_LIMIT = 1_000_000;
+const INIT_GAS_LIMIT = 100_000;
+const EXECUTE_GAS_LIMIT = 100_000;
 ```
 
 - `CONTRACT_PATH` is pointing to the location of the optimized **WebAssembly** version of the smart contract.
-- The `customFees` object stores the predefined amount of fees to pay in order to **upload** and **initialize** the smart contract. [Click here](https://github.com/enigmampc/SecretNetwork/blob/7adccb9a09579a564fc90173cc9509d88c46d114/cosmwasm-js/packages/sdk/src/signingcosmwasmclient.ts#L48) to check out the default fee table in the `SigningCosmWasmClient` source.
+- The remaining constants are gas limits for storing, initializing and executing the contract.
 
 ---
 
@@ -47,23 +39,23 @@ In `pages/api/secret/deploy.ts`, implement the default function. Upload your fir
 //...
 // Upload the contract wasm
 const wasm = fs.readFileSync(CONTRACT_PATH);
-const uploadReceipt = await client.undefined;
-if (!uploadReceipt) {
-  throw new Error('uploadReceipt error');
-}
+const uploadReceipt = await client.tx.compute.undefined;
+
 // Get the code ID from the receipt
 const {codeId} = uploadReceipt;
 
 // Create an instance of the Counter contract, providing a starting count
 const initMsg = {count: 101};
-const receipt = undefined;
+const receipt = await client.undefined;
+
+const contractAddress = undefined;
 //...
 ```
 
 **Need some help?** Check out these links 👇
 
-- [**Contract example**](https://github.com/enigmampc/SecretJS-Templates/tree/master/5_contracts)
-- [**The `upload` function**](https://github.com/enigmampc/SecretNetwork/blob/7adccb9a09579a564fc90173cc9509d88c46d114/cosmwasm-js/packages/sdk/src/signingcosmwasmclient.ts#L208)
+- [**Contract example**](https://github.com/scrtlabs/SecretJS-Templates/blob/master/5_contracts)
+- [**The `storeCode` function**](https://github.com/scrtlabs/secret.js#secretjstxcomputestorecode)
 
 Still not sure how to do this? No problem! The solution is below so you don't get stuck.
 
@@ -76,28 +68,68 @@ Still not sure how to do this? No problem! The solution is below so you don't ge
 //...
 // Upload the contract wasm
 const wasm = fs.readFileSync(CONTRACT_PATH);
-const uploadReceipt = await client.upload(wasm, {});
-if (!uploadReceipt) {
-  throw new Error('uploadReceipt error');
-}
+const uploadReceipt = await client.tx.compute.storeCode(
+  {
+    sender: wallet.address,
+    wasm_byte_code: wasm,
+    source: '',
+    builder: '',
+  },
+  {
+    gasLimit: STORE_CODE_GAS_LIMIT,
+  },
+);
 // Get the code ID from the receipt
-const {codeId} = uploadReceipt;
+const codeId = Number(
+  uploadReceipt.arrayLog.find(
+    (log: {type: string; key: string}) =>
+      log.type === 'message' && log.key === 'code_id',
+  ).value,
+);
+
+// Contract hash, useful for contract composition
+const contractCodeHash = (
+  await client.query.compute.codeHashByCodeId({code_id: codeId})
+).code_hash;
+console.log(`Contract hash: ${contractCodeHash}`);
 
 // Create an instance of the Counter contract, providing a starting count
 const initMsg = {count: 101};
-const receipt = await client.instantiate(codeId, initMsg, address.slice(6));
+const receipt = await client.tx.compute.instantiateContract(
+  {
+    code_id: codeId,
+    sender: wallet.address,
+    code_hash: contractCodeHash, // this is optional but makes contract executions much faster
+    init_msg: initMsg,
+    label: 'Simple Counter' + Math.ceil(Math.random() * 100000),
+  },
+  {
+    gasLimit: INIT_GAS_LIMIT,
+  },
+);
+
+const contractAddress = receipt.arrayLog.find(
+  (log: {type: string; key: string}) =>
+    log.type === 'message' && log.key === 'contract_address',
+).value;
+
+// An alternate way to reach the contract address
+// const contractAddress = JSON.parse(receipt?.rawLog)[0].events[0]
+// .attributes[3].value;
 //...
 ```
 
 **What happened in the code above?**
 
-- First, we upload the contract using `upload` method of the `SigningCosmWasmClient`.
-- Next, we destructure the `uploadReceipt` response object to get the `codeId` of the deployed contract
-- Finally, we instantiate the contract using `instantiate` method of the `SigningCosmWasmClient`, passing:
-  - The `codeId`.
-  - The `initMsg` contract method to instantiate the storage with a value of `101`.
-  - A label, which needs to be unique, which is why we use a slice of the address.
+- First, we upload the contract using `storeCode` method of the `SecretNetworkClient`.
+- Next, we searched the arrayLog in the `uploadReceipt` response object to find the `code_id` of the deployed contract
+- Finally, we instantiate the contract using `instantiateContract` method of the `SecretNetworkClient`, passing:
+  - The `code_id`.
+  - The `init_msg` contract method to instantiate the storage with a value of `101`.
+  - A label, which needs to be unique, which is why we use a random number.
+  - We set the transaction gas limit to the constant value INIT_GAS_LIMIT.
   - Optionally, we could also include a memo, a transfer amount, fees, and a code hash. For this example, these arguments are unnecessary.
+  - To find the deployed address of the contract, we can look in the receipt logs using the find method from JavaScript. As noted in the code comment, you could also parse the JSON response.
 
 ---
 

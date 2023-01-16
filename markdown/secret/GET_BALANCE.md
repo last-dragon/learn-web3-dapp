@@ -1,4 +1,4 @@
-Now that you have created an account on the **Secret** `supernova-2` network, and funded it using the faucet - We're going to check the balance of our account to make sure everything went alright.
+Now that you have created an account on the **Secret** `pulsar-2` network, and funded it using the faucet - We're going to check the balance of our account to make sure everything went alright.
 
 {% hint style="info" %}
 The native token on the **Secret Network** is **SCRT**
@@ -18,27 +18,23 @@ In `pages/api/secret/balance.ts`, implement the default function. You must repla
   try {
     const url = getNodeUrl();
     const { address }= req.body
-    const client = new CosmWasmClient(url)
+    const client = new SecretNetworkClient({url, chainId: 'pulsar-2'});
 
-    // Query the Account object
-    const account = undefined;
     // Return the balance
     const balance = undefined;
 
-    res.status(200).json(balance)
+    res.status(200).json(balance?.amount || '0')
   }
 ```
 
-**Need some help?** Check out these links 👇
+**Need some help?** Check out this link 👇
 
-- [**Query example**](https://github.com/enigmampc/SecretJS-Templates/blob/master/3_query_node/query.js)
-- [**Check out the CosmWasmClient source to understand the `Account` interface**](https://github.com/enigmampc/SecretNetwork/blob/master/cosmwasm-js/packages/sdk/src/cosmwasmclient.ts)
-- [**Also, look at `getAccount()` and what it returns**](https://github.com/enigmampc/SecretNetwork/blob/7adccb9a09579a564fc90173cc9509d88c46d114/cosmwasm-js/packages/sdk/src/cosmwasmclient.ts#L231)
+- [**Query example**](https://github.com/scrtlabs/secret.js#secretjsquerybankbalance)
 
 Still not sure how to do this? No problem! The solution is below so you don't get stuck.
 
 {% hint style="danger" %}
-You could experience some issues with the availability of the network. [**Click here to check the current status of `supernova-2`**](https://secretnodes.com/secret/chains/supernova-2)
+You could experience some issues with the availability of the network. [**Click here to check the current status of `pulsar-2`**](https://secretnodes.com/pulsar)
 {% endhint %}
 
 ---
@@ -50,24 +46,19 @@ You could experience some issues with the availability of the network. [**Click 
   try {
     const url = getNodeUrl();
     const { address }= req.body
-    const client = new CosmWasmClient(url);
+    const client = new SecretNetworkClient({url, chainId: 'pulsar-2'});
+    const { balance } = await client.query.bank.balance({
+      address: address,
+      denom: "uscrt",
+    });
 
-    const account = await client.getAccount(address);
-    const balance = account?.balance[0].amount as string;
-
-    res.status(200).json(balance)
+    res.status(200).json(balance?.amount || '0')
   }
 ```
 
 **What happened in the code above?**
 
-- First, we return an instance of the `Account` class from the `getAccount()` method.
-- Next, we check the balance by accessing the `amount` property of the `Account.balance[0]`. The array attached to `balance` here is because the TypeScript definitions specify a `balance` as being a `ReadOnlyArray<Coin>`. The zero-index refers to the SCRT Coin.
-  - Take note of the use of the [optional chaining operator](https://www.codeisbae.com/typescript-optional-chaining-nullish-coalescing/): `?.` This effectively prevents passing an incorrect value back to the client-side, because if there is no balance property present the expression will not evaluate.
-
-{% hint style="info" %}
-If you want to see more info, why not inspect the `Account` Object directly in the terminal using `console.log(account)`?
-{% endhint %}
+- We check the balance by querying the bank module and accessing the `amount` property of the `balance` object returned. The `balance` here is an optional <Coin> in the QueryBalanceResponse TypeScript definition.
 
 {% hint style="tip" %}
 The amount returned by is denominated in **μSCRT**, so to convert it to **SCRT** you'll need to divide it by 10\*\*6

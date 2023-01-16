@@ -15,7 +15,7 @@ const Balance = () => {
 
   const [fetching, setFetching] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [balance, setBalance] = useState<number | null>(null);
+  const [balance, setBalance] = useState<string | null>(null);
 
   useEffect(() => {
     if (balance) {
@@ -35,7 +35,9 @@ const Balance = () => {
         network,
       });
       setBalance(
-        parseFloat((parseFloat(response.data) / DECIMAL_OFFSET).toFixed()),
+        response.data === '0'
+          ? '0'
+          : (parseFloat(response.data) / DECIMAL_OFFSET).toFixed(),
       );
     } catch (error) {
       setError(error.message);

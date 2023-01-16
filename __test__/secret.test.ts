@@ -1,12 +1,5 @@
 import {getNodeUrl} from 'components/protocols/secret/lib';
-import {
-  EnigmaUtils,
-  SigningCosmWasmClient,
-  CosmWasmClient,
-  Secp256k1Pen,
-  pubkeyToAddress,
-  encodeSecp256k1Pubkey,
-} from 'secretjs';
+const {SecretNetworkClient, Wallet} = require('secretjs');
 import {Bip39, Random} from '@iov/crypto';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -18,26 +11,23 @@ afterAll(async () => {
   await new Promise<void>((resolve) => setTimeout(() => resolve(), 10000));
 });
 
-const client = new CosmWasmClient(getNodeUrl());
+const client = new SecretNetworkClient({url: getNodeUrl()});
 
 function getSecretExplorerURL(txHash: string) {
-  return `https://secretnodes.com/secret/chains/supernova-2/transactions/${txHash}`;
+  return `https://secretnodes.com/pulsar/transactions/${txHash}`;
 }
 
-async function getSigningPenFromMnemonic(mnemonic: string) {
-  return await Secp256k1Pen.fromMnemonic(mnemonic);
-}
-
-async function getAddressFromMnemonic(mnemonic: string) {
-  const signingPen = await Secp256k1Pen.fromMnemonic(mnemonic);
-  return pubkeyToAddress(encodeSecp256k1Pubkey(signingPen.pubkey), 'secret');
+function getAddressFromMnemonic(mnemonic: string) {
+  const wallet = new Wallet(mnemonic);
+  return wallet.address;
 }
 
 async function getBalanceFromMnemonic(mnemonic: string) {
-  const account = await client.getAccount(
-    await getAddressFromMnemonic(mnemonic),
-  );
-  return account?.balance[0].amount as string;
+  const {balance} = await client.query.bank.balance({
+    address: getAddressFromMnemonic(mnemonic),
+    denom: 'uscrt',
+  });
+  return balance as string;
 }
 
 async function connection() {
@@ -48,16 +38,12 @@ async function keypair(mnemonic: string) {
   if (!mnemonic) {
     const randomMnemonic = Bip39.encode(Random.getBytes(16)).toString();
     console.log('Generated mnemonic:', randomMnemonic);
-    const signingPen = await Secp256k1Pen.fromMnemonic(randomMnemonic);
-    const pubkey = encodeSecp256k1Pubkey(signingPen.pubkey);
-    const address = pubkeyToAddress(pubkey, 'secret');
-    console.log('Address of generated mnemonic:', address);
-    return address as string;
+    const wallet = new Wallet(randomMnemonic);
+    console.log('Address of generated mnemonic:', wallet.address);
+    return wallet.address as string;
   } else {
-    const signingPen = await Secp256k1Pen.fromMnemonic(mnemonic);
-    const pubkey = encodeSecp256k1Pubkey(signingPen.pubkey);
-    const address = pubkeyToAddress(pubkey, 'secret');
-    return address as string;
+    const wallet = new Wallet();
+    return wallet.address as string;
   }
 }
 
@@ -73,35 +59,20 @@ async function balance(mnemonic: string) {
 }
 
 async function transfer(recipient: string, sender: string) {
-  const txEncryptionSeed = EnigmaUtils.GenerateNewSeed();
   const TX_AMOUNT = '100000';
 
-  const fees = {
-    send: {
-      amount: [{amount: '80000', denom: 'uscrt'}],
-      gas: '80000',
-    },
-  } as object;
+  const recipientWallet = new Wallet(recipient);
+  const senderWallet = new Wallet(sender);
 
-  const signingPenSender = await getSigningPenFromMnemonic(sender);
-  const senderAddress = pubkeyToAddress(
-    encodeSecp256k1Pubkey(signingPenSender.pubkey),
-    'secret',
-  ) as string;
+  const receiverAddress = recipientWallet.address;
+  const senderAddress = senderWallet.address;
 
-  const signingPenRecipient = await getSigningPenFromMnemonic(recipient);
-  const receiverAddress = pubkeyToAddress(
-    encodeSecp256k1Pubkey(signingPenRecipient.pubkey),
-    'secret',
-  ) as string;
-
-  const client = new SigningCosmWasmClient(
-    getNodeUrl() as string,
-    senderAddress as string,
-    (signBytes) => signingPenSender.sign(signBytes),
-    txEncryptionSeed as Uint8Array,
-    fees as object,
-  );
+  const client = new SecretNetworkClient({
+    url: getNodeUrl(),
+    wallet: senderWallet,
+    walletAddress: senderAddress,
+    chainId: 'pulsar-2',
+  });
 
   const sent = await client.sendTokens(
     receiverAddress as string,
